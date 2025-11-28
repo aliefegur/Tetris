@@ -3,7 +3,8 @@
 #include <iostream>
 #include <vector>
 
-#include "File.h"
+#include "Core/Shader.h"
+#include "Core/ShaderProgram.h"
 
 struct Vertex
 {
@@ -62,22 +63,13 @@ int main(int argc, char** argv)
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
-	// Shader compilation
-	unsigned int vertexShader, fragmentShader, shaderProgram;
-	shaderProgram = glCreateProgram();
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	std::string vertexShaderSrcStr = File::ReadFile("shaders/ObjectVS.glsl");
-	std::string fragmentShaderSrcStr = File::ReadFile("shaders/ObjectFS.glsl");
-	const char* vertexShaderSrc = vertexShaderSrcStr.c_str();
-	const char* fragmentShaderSrc = fragmentShaderSrcStr.c_str();
-	glShaderSource(vertexShader, 1, &vertexShaderSrc, NULL);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSrc, NULL);
-	glCompileShader(vertexShader);
-	glCompileShader(fragmentShader);
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
+	// Shader pipeline
+	Shader	vertexShader(Shader::Type::VERTEX, "shaders/ObjectVS.glsl"), 
+			fragmentShader(Shader::Type::FRAGMENT, "shaders/ObjectFS.glsl");
+	ShaderProgram shaderProgram;
+	shaderProgram.AttachShader(vertexShader);
+	shaderProgram.AttachShader(fragmentShader);
+	shaderProgram.LinkProgram();
 
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window))
@@ -86,7 +78,8 @@ int main(int argc, char** argv)
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Draw call
-		glUseProgram(shaderProgram);
+		shaderProgram.Use();
+
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_SHORT, 0);
