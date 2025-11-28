@@ -6,7 +6,6 @@ project (ProjectName)
 # Libraries
 add_subdirectory(Dependencies/glad)
 add_subdirectory(Dependencies/GLFW)
-
-include_directories(Dependencies/glm)
+add_subdirectory(Dependencies/glm)
 
 add_subdirectory ("Tetris")
