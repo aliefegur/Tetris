@@ -5,12 +5,9 @@
 
 #include "Core/Shader.h"
 #include "Core/ShaderProgram.h"
-
-struct Vertex
-{
-	float Position[3];
-	float Color[3];
-};
+#include "Core/Vertex.h"
+#include "Core/Buffer.h"
+#include "Core/VertexArray.h"
 
 int main(int argc, char** argv)
 {
@@ -48,20 +45,16 @@ int main(int argc, char** argv)
 	};
 	std::vector<unsigned short> indices = { 0, 1, 2 };
 
-	// Vertex buffer, Vertex array, Element buffer
-	unsigned int VBO, VAO, EBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), indices.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Position));
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Color));
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
+	// Buffers
+	Buffer	vertexBuffer(Buffer::Type::Vertex),
+			elementBuffer(Buffer::Type::Index);
+	vertexBuffer.LoadData(vertices.data(), vertices.size() * sizeof(Vertex), Buffer::Usage::Static);
+	elementBuffer.LoadData(indices.data(), indices.size() * sizeof(unsigned short), Buffer::Usage::Static);
+	
+	// Vertex Array
+	VertexArray vertexArray;
+	vertexArray.SetAttribute(0, 3, GL_FLOAT, false, sizeof(Vertex), (void*)offsetof(Vertex, Position));
+	vertexArray.SetAttribute(1, 3, GL_FLOAT, false, sizeof(Vertex), (void*)offsetof(Vertex, Color));
 
 	// Shader pipeline
 	Shader	vertexShader(Shader::Type::VERTEX, "shaders/ObjectVS.glsl"), 
@@ -77,11 +70,12 @@ int main(int argc, char** argv)
 		/* Render here */
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// Draw call
+		// Bind shader and buffers
 		shaderProgram.Use();
+		vertexArray.Bind();
+		elementBuffer.Bind();
 
-		glBindVertexArray(VAO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		// Draw call
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_SHORT, 0);
 
 		/* Swap front and back buffers */
